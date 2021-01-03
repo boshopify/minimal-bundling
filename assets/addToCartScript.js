@@ -38,19 +38,42 @@ const selectCallback = () => {
 const addToCartCallback = (e) => {
     e.preventDefault()
     
-    let data = {
-        items: []
-    }
-    // push the bundle product variant ID for add to cart ajax API request
-    data.items.push({
-        id: document.querySelector('.product-single__variants').value
-    })
-    // push the bundle items' variant IDs selected by user for add to cart ajax API request
+    
+    // get the bundle product variant ID
+    const bundleProductVariantId = document.querySelector('.product-single__variants').value
+    //get the bundle items' variant IDs selected by user
+    let bundleItemsVariantIds = []
     document.querySelectorAll('.bundle-select').forEach( elem => {
-        data.items.push({
+        bundleItemsVariantIds.push({
             id: elem.value
         })
     } )
+
+    // push in the bundle product variant as the 1st cart line item
+    let data= {
+        items: [
+            {
+                id: bundleProductVariantId,
+                properties: {
+                    '_is_bundle': 'yes',
+                    '_bundle_items_variants': bundleItemsVariantIds
+                }
+            }
+        ]
+    }
+
+    // push in the bundle items variants as the other cart line items
+    bundleItemsVariantIds.forEach( elem => {
+        data.items.push({
+            id: elem.id,
+            properties: {
+                '_is_bundle_item': 'yes'
+            }
+        })
+    })
+
+    console.log(data)
+
     // use AJAX API to add multiple variants into cart
     fetch('/cart/add.js',{
         method: 'POST',
