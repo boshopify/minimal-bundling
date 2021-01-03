@@ -150,7 +150,6 @@
           <span class="h3" itemprop="brand">{{ product.vendor }}</span>
         {% endif %}
         <h1 class="product-single__title" itemprop="name">{{ product.title }}</h1>
-
         <div itemprop="offers" itemscope itemtype="http://schema.org/Offer">
           {% assign variant = product.selected_or_first_available_variant %}
 
@@ -205,6 +204,10 @@
               {% endfor %}
             </select>
 
+            {% if product.type == 'bundle' %}
+              {% render 'bundle-selector', bundle_collections: product.metafields.collections %}
+            {% endif %}
+
             <div class="product-single__quantity{% unless section.settings.product_quantity_enable %} is-hidden{% endunless %}">
               <label for="Quantity">{{ 'products.product.quantity' | t }}</label>
               <input type="number" id="Quantity" name="quantity" value="1" min="1" class="quantity-selector">
@@ -213,9 +216,17 @@
             <button type="submit" name="add" id="AddToCart" class="btn {{ btn_class }}{% if section.settings.enable_payment_button and product.selling_plan_groups == empty %} btn--secondary{% endif %}">
               <span id="AddToCartText">{{ 'products.product.add_to_cart' | t }}</span>
             </button>
-            {% if section.settings.enable_payment_button %}
-              {{ form | payment_button }}
+
+            {% comment %} 
+              {% if section.settings.enable_payment_button %}
+                {{ form | payment_button }}
+              {% endif %} 
+            {% endcomment %}
+
+            {% if product.type == 'bundle' %}
+              {{ 'addToCartScript.js' |  asset_url | script_tag }}
             {% endif %}
+
           {% endform %}
 
           {% unless section.settings.show_extra_tab == false or pages[section.settings.extra_tab_content] == empty %}
