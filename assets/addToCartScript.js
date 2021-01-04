@@ -44,9 +44,7 @@ const addToCartCallback = (e) => {
     //get the bundle items' variant IDs selected by user
     let bundleItemsVariantIds = []
     document.querySelectorAll('.bundle-select').forEach( elem => {
-        bundleItemsVariantIds.push({
-            id: elem.value
-        })
+        bundleItemsVariantIds.push(Number(elem.value))
     } )
 
     // push in the bundle product variant as the 1st cart line item
@@ -63,9 +61,9 @@ const addToCartCallback = (e) => {
     }
 
     // push in the bundle items variants as the other cart line items
-    bundleItemsVariantIds.forEach( elem => {
+    bundleItemsVariantIds.forEach( variantId => {
         data.items.push({
-            id: elem.id,
+            id: variantId,
             properties: {
                 '_is_bundle_item': 'yes'
             }

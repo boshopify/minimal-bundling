@@ -34,151 +34,179 @@
         Loop through products in the cart
       {% endcomment %}
       {% for item in cart.items %}
-        <div class="cart__row">
-          <div class="grid--full cart__row--table-large">
+        {% comment %} Check whether it is a bundle item and capture the boolean flag value {% endcomment %}
+        {% assign item_properties = item.properties | join: ',' %}
+        {% if item_properties contains "_is_bundle_item" %}
+          {% assign is_bundle_item = true %}
+        {% else %}
+          {% assign is_bundle_item = false %}
+        {% endif %}
 
-            <div class="grid__item post-large--one-half">
-              <div class="grid">
+        {% unless is_bundle_item %}
+          <div class="cart__row">
+            <div class="grid--full cart__row--table-large">
 
-                <div class="grid__item one-third">
-                  <a href="{{ item.url | within: collections.all }}">
-                    {% unless item.image == blank %}
-                      {% capture img_id %}ProductImage-{{ item.id }}{% endcapture %}
-                      {% capture wrapper_id %}ProductImageWrapper-{{ item.id }}{% endcapture %}
-                      {%- assign img_url = item.image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
-                      {% include 'image-style' with image: item.image, width: 210, height: 245, wrapper_id: wrapper_id, img_id: img_id %}
-                      <div id="{{ wrapper_id }}" class="cart__image-wrapper supports-js">
-                        <div style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;">
-                          <img id="{{ img_id }}"
-                               class="cart__image lazyload"
-                               data-src="{{ img_url }}"
-                               data-widths="[40, 65, 90, 120, 150, 180, 360, 480, 600]"
-                               data-aspectratio="{{ item.image.aspect_ratio }}"
-                               data-sizes="auto"
-                               alt="{{ item.title | escape }}">
+              <div class="grid__item post-large--one-half">
+                <div class="grid">
+
+                  <div class="grid__item one-third">
+                    <a href="{{ item.url | within: collections.all }}">
+                      {% unless item.image == blank %}
+                        {% capture img_id %}ProductImage-{{ item.id }}{% endcapture %}
+                        {% capture wrapper_id %}ProductImageWrapper-{{ item.id }}{% endcapture %}
+                        {%- assign img_url = item.image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
+                        {% include 'image-style' with image: item.image, width: 210, height: 245, wrapper_id: wrapper_id, img_id: img_id %}
+                        <div id="{{ wrapper_id }}" class="cart__image-wrapper supports-js">
+                          <div style="padding-top:{{ 1 | divided_by: item.image.aspect_ratio | times: 100}}%;">
+                            <img id="{{ img_id }}"
+                                class="cart__image lazyload"
+                                data-src="{{ img_url }}"
+                                data-widths="[40, 65, 90, 120, 150, 180, 360, 480, 600]"
+                                data-aspectratio="{{ item.image.aspect_ratio }}"
+                                data-sizes="auto"
+                                alt="{{ item.title | escape }}">
+                          </div>
                         </div>
-                      </div>
-                    {% else %}
-                      <p><img src="{{ item | img_url: 'medium' }}" alt="{{ item.title | escape }}"></p>
+                      {% else %}
+                        <p><img src="{{ item | img_url: 'medium' }}" alt="{{ item.title | escape }}"></p>
+                      {% endunless %}
+
+                      <noscript>
+                        <p><img src="{{ item | img_url: 'medium' }}" alt="{{ item.title | escape }}"></p>
+                      </noscript>
+                    </a>
+                  </div>
+
+                  <div class="grid__item two-thirds">
+                    <a href="{{ item.url }}" class="h5 cart__product-title">
+                      {{ item.product.title }}
+                    </a>
+                    {% unless item.variant.title contains 'Default' %}
+                      <br>
+                      <small>{{ item.variant.title }}</small>
                     {% endunless %}
 
-                    <noscript>
-                      <p><img src="{{ item | img_url: 'medium' }}" alt="{{ item.title | escape }}"></p>
-                    </noscript>
-                  </a>
-                </div>
+                    {% unless item.selling_plan_allocation == nil %}
+                      <br>
+                      <small>{{ item.selling_plan_allocation.selling_plan.name }}</small>
+                    {% endunless %}
 
-                <div class="grid__item two-thirds">
-                  <a href="{{ item.url }}" class="h5 cart__product-title">
-                    {{ item.product.title }}
-                  </a>
-                  {% unless item.variant.title contains 'Default' %}
-                    <br>
-                    <small>{{ item.variant.title }}</small>
-                  {% endunless %}
+                    {% comment %}
+                      Optional, loop through custom product line items if available
 
-                  {% unless item.selling_plan_allocation == nil %}
-                    <br>
-                    <small>{{ item.selling_plan_allocation.selling_plan.name }}</small>
-                  {% endunless %}
+                      For more info on line item properties, visit:
+                        - http://docs.shopify.com/support/your-store/products/how-do-I-collect-additional-information-on-the-product-page-Like-for-a-monogram-engraving-or-customization
+                    {% endcomment %}
+                    {% assign propertySize = item.properties | size %}
+                    {% if propertySize > 0 %}
+                      {% for p in item.properties %}
+                        {% assign first_character_in_key = p.first | truncate: 1, '' %}
+                        {% unless p.last == blank or first_character_in_key == '_' %}
+                          <br>
+                          <small>{{ p.first }}: </small>
 
-                  {% comment %}
-                    Optional, loop through custom product line items if available
+                          {% comment %}
+                            Check if there was an uploaded file associated
+                          {% endcomment %}
+                          {% if p.last contains '/uploads/' %}
+                            <a href="{{ p.last }}"><small>{{ p.last | split: '/' | last }}</small></a>
+                          {% else %}
+                            <small>{{ p.last }}</small>
+                          {% endif %}
 
-                    For more info on line item properties, visit:
-                      - http://docs.shopify.com/support/your-store/products/how-do-I-collect-additional-information-on-the-product-page-Like-for-a-monogram-engraving-or-customization
-                  {% endcomment %}
-                  {% assign propertySize = item.properties | size %}
-                  {% if propertySize > 0 %}
-                    {% for p in item.properties %}
-                      {% assign first_character_in_key = p.first | truncate: 1, '' %}
-                      {% unless p.last == blank or first_character_in_key == '_' %}
-                        <br>
-                        <small>{{ p.first }}: </small>
+                        {% endunless %}
 
-                        {% comment %}
-                          Check if there was an uploaded file associated
-                        {% endcomment %}
-                        {% if p.last contains '/uploads/' %}
-                          <a href="{{ p.last }}"><small>{{ p.last | split: '/' | last }}</small></a>
-                        {% else %}
-                          <small>{{ p.last }}</small>
+                        {% comment %} If the item is a bundle product, read out the variant IDs of the bundle items from the bundle's properties {% endcomment %}
+                        {% if p.first == '_bundle_items_variants' %}
+                          {% assign bundle_items_variants = p.last | remove: '[' | remove: ']' | remove: ' ' %}
                         {% endif %}
 
-                      {% endunless %}
-                    {% endfor %}
-                  {% endif %}
+                      {% endfor %}
+                    {% endif %}
 
-                  <a href="{{ routes.cart_change_url }}?line={{ forloop.index }}&amp;quantity=0" class="cart__remove">
-                    <small>{{ 'cart.general.remove' | t }}</small>
-                  </a>
-                </div>
+                    <a href="{{ routes.cart_change_url }}?line={{ forloop.index }}&amp;quantity=0" 
+                    class="cart__remove"
+                    {% if item.product.type=='bundle' %}
+                      data-product-type="bundle"
+                      data-variants='{{ item.variant_id | append: "," | append: bundle_items_variants }}'
+                    {% endif %}
+                    >
+                      <small>{{ 'cart.general.remove' | t }}</small>
+                    </a>
+                  </div>
 
-              </div>
-            </div>
-
-            <div class="grid__item post-large--one-half">
-              <div class="grid--full cart__row--table-large">
-
-                <div class="grid__item one-half one-half medium-down--one-third post-large--text-right">
-                  <span class="cart__mini-labels">{{ 'cart.label.price' | t }}</span>
-                  {%- if item.original_price != item.final_price -%}
-                    <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
-                    <del class="h5">{{ item.original_price | money }}</del>
-                    <span class="visually-hidden">{{ 'products.product.sale_price' | t }}</span>
-                    <span class="order-discount order-discount--price h5">{{ item.final_price | money }}</span>
-                  {%- else -%}
-                    <span class="h5">{{ item.original_price | money }}</span>
-                  {%- endif -%}
-
-                  {%- if item.variant.available and item.variant.unit_price_measurement -%}
-                    {% include 'product-unit-price', variant: item, available: item.variant.available %}
-                  {%- endif -%}
-
-                  {%- if item.line_level_discount_allocations != blank -%}
-                    <ul class="order-discount order-discount--list order-discount--title order-discount--cart medium-down--hide" aria-label="{{ 'customer.order.discount' | t }}">
-                      {%- for discount_allocation in item.line_level_discount_allocations -%}
-                        <li class="order-discount__item">
-                          <span class="icon icon-saletag" aria-hidden="true"></span>{{ discount_allocation.discount_application.title }} (-{{ discount_allocation.amount | money }})
-                        </li>
-                      {%- endfor -%}
-                    </ul>
-                  {%- endif -%}
-                </div>
-
-                <div class="grid__item one-quarter one-half medium-down--one-third text-center">
-                  <label for="updates_{{ item.key }}" class="cart__mini-labels">{{ 'cart.label.quantity' | t }}</label>
-                  <input type="number" class="cart__quantity-selector" name="updates[]" id="updates_{{ item.key }}" value="{{ item.quantity }}" min="0" aria-label="{{ 'cart.label.quantity' | t }}">
-                </div>
-
-                <div class="grid__item one-quarter one-half medium-down--one-third text-right">
-                  <span class="cart__mini-labels">{{ 'cart.label.total' | t }}</span>
-                  {%- if item.original_line_price != item.final_line_price -%}
-                    <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
-                    <del class="h5">{{ item.original_line_price | money }}</del>
-                    <span class="visually-hidden">{{ 'products.product.sale_price' | t }}</span>
-                    <span class="order-discount h5">{{ item.final_line_price | money }}</span>
-                  {%- else -%}
-                    <span class="h5">{{ item.original_line_price | money }}</span>
-                  {%- endif -%}
-                </div>
-
-                <div class="grid__item text-center post-large--hide">
-                  {%- if item.line_level_discount_allocations != blank -%}
-                    <ul class="order-discount order-discount--list order-discount--title order-discount--cart" aria-label="{{ 'customer.order.discount' | t }}">
-                      {%- for discount_allocation in item.line_level_discount_allocations -%}
-                        <li class="order-discount__item">
-                          <span class="icon icon-saletag" aria-hidden="true"></span>{{ discount_allocation.discount_application.title }} (-{{ discount_allocation.amount | money }})
-                        </li>
-                      {%- endfor -%}
-                    </ul>
-                  {%- endif -%}
                 </div>
               </div>
-            </div>
 
+              <div class="grid__item post-large--one-half">
+                <div class="grid--full cart__row--table-large">
+
+                  <div class="grid__item one-half one-half medium-down--one-third post-large--text-right">
+                    <span class="cart__mini-labels">{{ 'cart.label.price' | t }}</span>
+                    {%- if item.original_price != item.final_price -%}
+                      <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+                      <del class="h5">{{ item.original_price | money }}</del>
+                      <span class="visually-hidden">{{ 'products.product.sale_price' | t }}</span>
+                      <span class="order-discount order-discount--price h5">{{ item.final_price | money }}</span>
+                    {%- else -%}
+                      <span class="h5">{{ item.original_price | money }}</span>
+                    {%- endif -%}
+
+                    {%- if item.variant.available and item.variant.unit_price_measurement -%}
+                      {% include 'product-unit-price', variant: item, available: item.variant.available %}
+                    {%- endif -%}
+
+                    {%- if item.line_level_discount_allocations != blank -%}
+                      <ul class="order-discount order-discount--list order-discount--title order-discount--cart medium-down--hide" aria-label="{{ 'customer.order.discount' | t }}">
+                        {%- for discount_allocation in item.line_level_discount_allocations -%}
+                          <li class="order-discount__item">
+                            <span class="icon icon-saletag" aria-hidden="true"></span>{{ discount_allocation.discount_application.title }} (-{{ discount_allocation.amount | money }})
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+                  </div>
+
+                  <div class="grid__item one-quarter one-half medium-down--one-third text-center">
+                    <label for="updates_{{ item.key }}" class="cart__mini-labels">{{ 'cart.label.quantity' | t }}</label>
+                    {% if item.product.type == 'bundle' %}
+                      {% render 'cart-bundle-quantity-selector', item: item, bundle_items_variants: bundle_items_variants %}
+                    {% elsif is_bundle_item == true %}
+                      {% comment %} No quantity input for user to select for bundle items {% endcomment %}
+                    {% else %}
+                      <input type="number" class="cart__quantity-selector" name="updates[]" id="updates_{{ item.key }}" value="{{ item.quantity }}" min="0" aria-label="{{ 'cart.label.quantity' | t }}">
+                    {% endif %}
+                  </div>
+
+                  <div class="grid__item one-quarter one-half medium-down--one-third text-right">
+                    <span class="cart__mini-labels">{{ 'cart.label.total' | t }}</span>
+                    {%- if item.original_line_price != item.final_line_price -%}
+                      <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+                      <del class="h5">{{ item.original_line_price | money }}</del>
+                      <span class="visually-hidden">{{ 'products.product.sale_price' | t }}</span>
+                      <span class="order-discount h5">{{ item.final_line_price | money }}</span>
+                    {%- else -%}
+                      <span class="h5">{{ item.original_line_price | money }}</span>
+                    {%- endif -%}
+                  </div>
+
+                  <div class="grid__item text-center post-large--hide">
+                    {%- if item.line_level_discount_allocations != blank -%}
+                      <ul class="order-discount order-discount--list order-discount--title order-discount--cart" aria-label="{{ 'customer.order.discount' | t }}">
+                        {%- for discount_allocation in item.line_level_discount_allocations -%}
+                          <li class="order-discount__item">
+                            <span class="icon icon-saletag" aria-hidden="true"></span>{{ discount_allocation.discount_application.title }} (-{{ discount_allocation.amount | money }})
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
+        {% endunless %}
       {% endfor %}
 
       <div class="cart__row">
@@ -261,6 +289,8 @@
   {% endif %}
 </div>
 
+{% comment %} Load custom JS code to handle cart update AJAX for bundle(s) {% endcomment %}
+{{ 'updateCartScript.js' |  asset_url | script_tag }}
 
 
 {% schema %}
