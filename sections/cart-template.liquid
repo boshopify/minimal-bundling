@@ -174,7 +174,7 @@
                     {% elsif is_bundle_item == true %}
                       {% comment %} No quantity input for user to select for bundle items {% endcomment %}
                     {% else %}
-                      <input type="number" class="cart__quantity-selector" name="updates[]" id="updates_{{ item.key }}" value="{{ item.quantity }}" min="0" aria-label="{{ 'cart.label.quantity' | t }}">
+                      <input type="number" class="cart__quantity-selector" name="updates[{{ item.variant_id }}]" id="updates_{{ item.key }}" value="{{ item.quantity }}" min="0" aria-label="{{ 'cart.label.quantity' | t }}">
                     {% endif %}
                   </div>
 
